@@ -1,0 +1,25 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ticket Submitted</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Thank you!</h1>
+    <p>Your ticket has been submitted successfully.</p>
+    <p><strong>Your ticket number is: <span id="ticketNumber"></span></strong></p>
+  </div>
+<script>
+  // Get ticket number from query param ?ticket=
+  function getTicketNumber() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('ticket') || '';
+  }
+  document.getElementById('ticketNumber').textContent = getTicketNumber();
+</script>
+</body>
+</html>
