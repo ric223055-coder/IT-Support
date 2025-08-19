@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (!$error) {
+        
         $fullname   = htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8');
         $department = htmlspecialchars($department, ENT_QUOTES, 'UTF-8');
         $contact    = htmlspecialchars($contact, ENT_QUOTES, 'UTF-8');
@@ -62,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mail = new PHPMailer(true);
 
         try {
-            // SMTP settings
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
@@ -71,11 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
 
-            // Recipients
             $mail->setFrom($GMAIL_USER, 'IT Support Ticket');
             $mail->addAddress($IT_SUPPORT_EMAIL, 'IT Support');
 
-            // Email content
             $mail->isHTML(true);
             $mail->Subject = "New IT Support Ticket: $ticket_number";
             $mail->Body = "
@@ -90,9 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               </table>
             ";
 
-            // ✅ Handle file attachment
-            if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
-                $mail->addAttachment($_FILES['screenshot']['tmp_name'], $_FILES['screenshot']['name']);
+            // ✅ Handle multiple file attachments
+            if (isset($_FILES['attachments']) && !empty($_FILES['attachments']['name'][0])) {
+                for ($i = 0; $i < count($_FILES['attachments']['name']); $i++) {
+                    if ($_FILES['attachments']['error'][$i] === UPLOAD_ERR_OK) {
+                        $mail->addAttachment(
+                            $_FILES['attachments']['tmp_name'][$i],
+                            $_FILES['attachments']['name'][$i]
+                        );
+                    }
+                }
             }
 
             $mail->send();
@@ -120,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $error = "Invalid request method.";
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
