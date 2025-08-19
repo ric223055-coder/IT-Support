@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mail = new PHPMailer(true);
 
         try {
+            // SMTP settings
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
@@ -70,17 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
 
+            // Recipients
             $mail->setFrom($GMAIL_USER, 'IT Support Ticket');
             $mail->addAddress($IT_SUPPORT_EMAIL, 'IT Support');
 
-            // ✅ Add attachment if uploaded
-            if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] == UPLOAD_ERR_OK) {
-                $mail->addAttachment($_FILES['screenshot']['tmp_name'], $_FILES['screenshot']['name']);
-            } else {
-                // optional: note in email body if no attachment
-                $no_attachment_note = "<p><em>No screenshot was attached.</em></p>";
-            }
-
+            // Email content
             $mail->isHTML(true);
             $mail->Subject = "New IT Support Ticket: $ticket_number";
             $mail->Body = "
@@ -93,12 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <tr><th align='left'>Category</th><td>{$category}</td></tr>
                 <tr><th align='left'>Description</th><td>" . nl2br($description) . "</td></tr>
               </table>
-              " . ($no_attachment_note ?? '') . "
             ";
+
+            // ✅ Handle file attachment
+            if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
+                $mail->addAttachment($_FILES['screenshot']['tmp_name'], $_FILES['screenshot']['name']);
+            }
 
             $mail->send();
 
-            // Save to CSV log
+            // Save CSV log
             $csv_line = [
                 $ticket_number,
                 $fullname,
