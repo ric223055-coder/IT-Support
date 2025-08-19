@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>IT Support Ticket Form</title>
   <style>
-    /* Basic styles */
     body, html {
       margin: 0; padding: 0; height: 100%;
       font-family: Arial, sans-serif;
@@ -55,7 +54,7 @@
 
   <div class="container">
     <h1>IT Support Ticket Form</h1>
-    <form action="send_ticket.php" method="POST" id="ticketForm">
+    <form action="send_ticket.php" method="POST" id="ticketForm" enctype="multipart/form-data">
       <label for="fullname">Full Name:</label>
       <input type="text" id="fullname" name="fullname" required />
 
@@ -78,8 +77,13 @@
       <label for="description">Issue Description:</label>
       <textarea id="description" name="description" rows="5" required></textarea>
 
+      <!-- New file upload field -->
+      <label for="screenshot">Attach Screenshot / Picture (optional):</label>
+      <input type="file" id="screenshot" name="screenshot" accept="image/*" />
+
       <button type="submit">Submit Ticket</button>
 
+      <!-- Preview container -->
       <div id="pastedImageContainer"></div>
     </form>
   </div>
@@ -110,28 +114,24 @@
 
   <script>
     document.addEventListener('paste', async (e) => {
-      e.preventDefault();
-
-      const items = typeof navigator?.clipboard?.read === 'function'
-        ? await navigator.clipboard.read()
-        : e.clipboardData.files;
-
+      const items = e.clipboardData?.items || [];
       for (const item of items) {
-        let blob;
-        if (item.type?.startsWith('image/')) {
-          blob = item;
-        } else if (item.types && item.types.find(t => t.startsWith('image/'))) {
-          const typename = item.types.find(t => t.startsWith('image/'));
-          blob = await item.getType(typename);
-        } else {
-          continue;
-        }
+        if (item.type.indexOf("image") === 0) {
+          const blob = item.getAsFile();
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(blob);
+          img.className = 'pasted-image';
+          document.getElementById('pastedImageContainer').innerHTML = "";
+          document.getElementById('pastedImageContainer').appendChild(img);
 
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(blob);
-        img.className = 'pasted-image';
-        document.getElementById('pastedImageContainer').appendChild(img);
-        break;
+          // Convert blob to File & inject to file input
+          const fileInput = document.getElementById('screenshot');
+          const file = new File([blob], "pasted_image.png", { type: blob.type });
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInput.files = dataTransfer.files;
+          break;
+        }
       }
     });
   </script>
