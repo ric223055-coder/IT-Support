@@ -2,11 +2,9 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-
 require __DIR__ . '/PHPMailer/src/Exception.php';
 require __DIR__ . '/PHPMailer/src/PHPMailer.php';
 require __DIR__ . '/PHPMailer/src/SMTP.php';
-
 
 $GMAIL_USER = $_ENV['GMAIL_USER'];
 $GMAIL_APP_PASSWORD = $_ENV['GMAIL_APP_PASSWORD'];
@@ -52,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (!$error) {
-        
         $fullname   = htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8');
         $department = htmlspecialchars($department, ENT_QUOTES, 'UTF-8');
         $contact    = htmlspecialchars($contact, ENT_QUOTES, 'UTF-8');
@@ -76,6 +73,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $mail->setFrom($GMAIL_USER, 'IT Support Ticket');
             $mail->addAddress($IT_SUPPORT_EMAIL, 'IT Support');
 
+            // ✅ Add attachment if uploaded
+            if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] == UPLOAD_ERR_OK) {
+                $mail->addAttachment($_FILES['screenshot']['tmp_name'], $_FILES['screenshot']['name']);
+            } else {
+                // optional: note in email body if no attachment
+                $no_attachment_note = "<p><em>No screenshot was attached.</em></p>";
+            }
+
             $mail->isHTML(true);
             $mail->Subject = "New IT Support Ticket: $ticket_number";
             $mail->Body = "
@@ -88,11 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <tr><th align='left'>Category</th><td>{$category}</td></tr>
                 <tr><th align='left'>Description</th><td>" . nl2br($description) . "</td></tr>
               </table>
+              " . ($no_attachment_note ?? '') . "
             ";
 
             $mail->send();
 
-            
+            // Save to CSV log
             $csv_line = [
                 $ticket_number,
                 $fullname,
@@ -115,7 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $error = "Invalid request method.";
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
