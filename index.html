@@ -8,20 +8,20 @@
     body, html {
       margin: 0; padding: 0; height: 100%;
       font-family: Arial, sans-serif;
-      background-color: #111; color: #fff;
-      overflow: hidden;
+      background-color: #111;
+      color: #fff;
+      overflow: auto;
     }
     #particles-js {
-      position: fixed; width: 100%; height: 100%;
-      top: 0; left: 0; z-index: -1;
+      position: fixed; width: 100%; height: 100%; z-index: 0;
+      top: 0; left: 0;
     }
     .container {
-      max-width: 500px; margin: 60px auto;
+      position: relative; z-index: 1; max-width: 400px;
+      margin: 60px auto 80px;
       background: rgba(0,0,0,0.7); padding: 30px;
       border-radius: 10px; box-shadow: 0 0 10px #00c8ff;
-      position: relative; z-index: 1;
     }
-    h1 { color: #00c8ff; text-align: center; }
     label { display: block; margin: 15px 0 5px; }
     input, select, textarea {
       width: 100%; padding: 8px; border-radius: 4px;
@@ -29,20 +29,32 @@
     }
     button {
       margin-top: 20px; background-color: #00c8ff;
-      border: none; padding: 12px; width: 100%;
-      color: #000; font-weight: bold; font-size: 16px;
-      cursor: pointer; border-radius: 5px;
+      border: none; padding: 10px; width: 100%;
+      color: #000; font-weight: bold;
+      font-size: 16px; cursor: pointer; border-radius: 5px;
+      transition: background-color 0.3s;
     }
     button:hover { background-color: #0099cc; }
+    footer {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      background: #222; color: #aaa; text-align: center;
+      padding: 12px 10px; font-size: 14px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.6); z-index: 2;
+    }
+    footer a { color: #00c8ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .pasted-image {
+      max-width: 100%; margin-top: 20px;
+      border-radius: 5px; box-shadow: 0 0 8px #00c8ff;
+    }
   </style>
 </head>
 <body>
-  <!-- Particle background -->
   <div id="particles-js"></div>
 
   <div class="container">
     <h1>IT Support Ticket Form</h1>
-    <form action="send_ticket.php" method="POST" enctype="multipart/form-data">
+    <form action="send_ticket.php" method="POST" id="ticketForm" enctype="multipart/form-data">
       <label for="fullname">Full Name:</label>
       <input type="text" id="fullname" name="fullname" required />
 
@@ -65,26 +77,61 @@
       <label for="description">Issue Description:</label>
       <textarea id="description" name="description" rows="5" required></textarea>
 
-      <!-- ✅ Multiple file attachments -->
-      <label for="attachments">Attach File(s):</label>
-      <input type="file" id="attachments" name="attachments[]" multiple>
+      <!-- New file upload field -->
+      <label for="screenshot">Attach Screenshot / Picture (optional):</label>
+      <input type="file" id="screenshot" name="screenshot" accept="image/*" />
 
       <button type="submit">Submit Ticket</button>
+
+      <!-- Preview container -->
+      <div id="pastedImageContainer"></div>
     </form>
   </div>
 
-  <!-- Particles.js script -->
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <footer>&copy; 2025 All rights reserved. | Website by <a href="#">Ricardo Doroteo</a></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
     particlesJS("particles-js", {
-      "particles": {
-        "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+      "particles": { "number": { "value": 80, "density": { "enable": true, "value_area": 700 } },
         "color": { "value": "#00c8ff" },
         "shape": { "type": "circle" },
         "opacity": { "value": 0.5 },
-        "size": { "value": 3 },
-        "line_linked": { "enable": true, "color": "#00c8ff", "opacity": 0.4 },
-        "move": { "enable": true, "speed": 2 }
+        "size": { "value": 3, "random": true },
+        "move": { "enable": true, "speed": 2, "out_mode": "out" },
+        "line_linked": { "enable": true, "distance": 150, "color": "#00c8ff", "opacity": 0.4, "width": 1 }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": { "onhover": { "enable": true, "mode": "grab" },
+                    "onclick": { "enable": true, "mode": "push" } },
+        "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } },
+                   "push": { "particles_nb": 4 } }
+      },
+      "retina_detect": true
+    });
+  </script>
+
+  <script>
+    document.addEventListener('paste', async (e) => {
+      const items = e.clipboardData?.items || [];
+      for (const item of items) {
+        if (item.type.indexOf("image") === 0) {
+          const blob = item.getAsFile();
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(blob);
+          img.className = 'pasted-image';
+          document.getElementById('pastedImageContainer').innerHTML = "";
+          document.getElementById('pastedImageContainer').appendChild(img);
+
+          // Convert blob to File & inject to file input
+          const fileInput = document.getElementById('screenshot');
+          const file = new File([blob], "pasted_image.png", { type: blob.type });
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fileInput.files = dataTransfer.files;
+          break;
+        }
       }
     });
   </script>

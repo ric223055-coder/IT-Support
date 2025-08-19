@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mail = new PHPMailer(true);
 
         try {
+            // SMTP settings
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
@@ -70,9 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
 
+            // Recipients
             $mail->setFrom($GMAIL_USER, 'IT Support Ticket');
             $mail->addAddress($IT_SUPPORT_EMAIL, 'IT Support');
 
+            // Email content
             $mail->isHTML(true);
             $mail->Subject = "New IT Support Ticket: $ticket_number";
             $mail->Body = "
@@ -87,21 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               </table>
             ";
 
-            // ✅ Multiple file attachments
-            if (isset($_FILES['attachments']) && !empty($_FILES['attachments']['name'][0])) {
-                for ($i = 0; $i < count($_FILES['attachments']['name']); $i++) {
-                    if ($_FILES['attachments']['error'][$i] === UPLOAD_ERR_OK) {
-                        $mail->addAttachment(
-                            $_FILES['attachments']['tmp_name'][$i],
-                            $_FILES['attachments']['name'][$i]
-                        );
-                    }
-                }
+            // ✅ Handle file attachment
+            if (isset($_FILES['screenshot']) && $_FILES['screenshot']['error'] === UPLOAD_ERR_OK) {
+                $mail->addAttachment($_FILES['screenshot']['tmp_name'], $_FILES['screenshot']['name']);
             }
 
             $mail->send();
 
-            // Save to CSV
+            // Save CSV log
             $csv_line = [
                 $ticket_number,
                 $fullname,
@@ -128,23 +124,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ticket Submission Result</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IT Support Ticket Submission</title>
 <style>
-  body { background:#111; color:#fff; font-family:Arial,sans-serif; text-align:center; padding:50px; }
-  .msg { padding:20px; border-radius:8px; display:inline-block; }
-  .success { background:#222; color:#55ff55; box-shadow:0 0 10px #55ff55; }
-  .error { background:#222; color:#ff5555; box-shadow:0 0 10px #ff5555; }
-  button { margin-top:20px; background:#00c8ff; border:none; padding:10px 20px;
-           border-radius:5px; cursor:pointer; font-weight:bold; }
+body, html { margin:0; padding:0; font-family: Arial,sans-serif; background:#111; color:#fff; text-align:center; }
+.container { max-width:600px; margin:80px auto; background:rgba(0,0,0,0.75); padding:30px; border-radius:12px; box-shadow:0 0 15px #00c8ff; }
+h1 { color:#00c8ff; margin-bottom:20px; }
+.message { font-size:18px; margin:20px 0; }
+.error { color:#ff5555; }
+.success { color:#55ff55; }
+button { background:#00c8ff; border:none; padding:12px 25px; font-size:16px; color:#000; font-weight:bold; border-radius:6px; cursor:pointer; }
+button:hover { background:#0099cc; }
 </style>
 </head>
 <body>
+<div class="container">
+  <h1>IT Support Ticket Submission</h1>
   <?php if ($message): ?>
-    <div class="msg success"><?= $message ?></div>
+    <p class="message success"><?= $message ?></p>
   <?php elseif ($error): ?>
-    <div class="msg error"><?= htmlspecialchars($error) ?></div>
+    <p class="message error"><?= htmlspecialchars($error) ?></p>
   <?php endif; ?>
-  <br>
-  <button onclick="window.location.href='index.html'">Go Back</button>
+  <button onclick="window.location.href='index.html'">Go Back to Form</button>
+</div>
 </body>
 </html>
